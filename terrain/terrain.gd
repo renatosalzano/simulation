@@ -3,7 +3,7 @@ class_name Terrain extends Node3D
 
 var utils:= preload('res://terrain/utils.gd')
 
-var build_mesh:= true
+var build_mesh:= false
 var build_chunk:= true
 
 @export_group('Settings', 'set_')
@@ -13,15 +13,14 @@ var build_chunk:= true
 @export var set_chunk:= Vector3i(3,3,64):
 	set(value):
 		build_mesh = value.z != set_chunk.z
-		build_mesh = true
 		build_chunk = true
 		set_chunk = value
 
+@export var set_height:= 50.0:
+	set(value): set_height = value; update_terrain()
+
 @export var set_lod: int = 0:
 	set(value): set_lod = max(0,value); chunks.each(func(chunk): chunk.set_LOD(set_lod))
-
-@export var set_material:= ShaderMaterial.new():
-	set(value): set_material = value; if set_material: set_material.shader.changed.connect(update_material)
 
 @export var set_noise: Array[FastNoiseLite] = []:
 	set(value): set_noise = value;
@@ -59,7 +58,16 @@ func _ready() -> void:
 		camera = EditorInterface.get_editor_viewport_3d().get_camera_3d()
 		brush.set_brush(edit_brush, edit_brush_preview)
 
-	# meshes = utils.generate(set_chunk.z)
+	var cached_meshes = resource.load_meshes()
+
+	if cached_meshes is Array:
+		build_mesh = false
+		meshes = cached_meshes
+		print("stored meshes")
+	else:
+		build_mesh = true
+	
+	print("build mesh ", build_mesh)
 
 	update_terrain()
 
@@ -83,6 +91,8 @@ func get_noise(x: float, y: float) -> float:
 
 func update_terrain():
 
+	print("update terrain")
+
 	if not is_node_ready():
 		return
 
@@ -91,15 +101,9 @@ func update_terrain():
 		build_chunk = false
 
 		if build_mesh:
-			# var _meshes = resource.load_meshes()
-			# print(_meshes)
-			# if _meshes != null:
-			# 	print(_meshes)
-			
+			build_mesh = false
 			meshes = utils.generate(set_chunk.z)
 			resource.save_meshes(meshes)
-
-			# ResourceSaver.save(meshes, "res://terrain/data/chunk_meshes.tscn")
 
 		var offset:= Vector2(
 			(set_chunk.x - 1) * -set_chunk.z / 2.0,
@@ -119,10 +123,10 @@ func update_terrain():
 				var i = Vector2i(x,y)
 
 				var chunk:= Chunk.new(i, set_chunk.z, meshes)
-				chunk.set_material(set_material, get_noise)
+				chunk.set_material(set_height, get_noise)
 				chunk.translate(reposition)
 
-				collision.shape.update_map_data_from_image(chunk.heightmap.image, 0.0, 50.0)
+				collision.shape.update_map_data_from_image(chunk.heightmap.image, 0.0, set_height)
 				collision.position = reposition
 
 				chunks.add(i, chunk)
@@ -150,7 +154,7 @@ func update_terrain():
 						chunk.neighbors[i] = chunks.get_chunk(neighbor_idx)
 	else:
 		chunks.each(func(chunk):
-			chunk.set_material(set_material, get_noise)
+			chunk.set_material(set_height, get_noise)
 			pass
 		)
 		pass

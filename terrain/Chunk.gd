@@ -1,5 +1,7 @@
 class_name Chunk extends StaticBody3D
 
+var shader = preload("res://terrain/terrain.gdshader")
+
 var index: Vector2i
 
 var lod:= {
@@ -27,7 +29,6 @@ var heightmap:= {
 }
 
 var img_len: int;
-var height_scale: float;
 
 func _init(i: Vector2i, size: int, meshes: Array): # material: ShaderMaterial, get_noise: Callable
 	index = i
@@ -40,10 +41,15 @@ func _init(i: Vector2i, size: int, meshes: Array): # material: ShaderMaterial, g
 	heightmap.image = Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_RF)
 	heightmap.texture = ImageTexture.create_from_image(heightmap.image)
 
-	heightmap.shape.map_width = heightmap.len
-	heightmap.shape.map_depth = heightmap.len
+	# heightmap.shape.map_width = heightmap.len
+	# heightmap.shape.map_depth = heightmap.len
 
 	collision.shape = heightmap.shape
+
+	mesh_instance.mesh = lod.meshes[lod.index][lod.type]
+
+	mesh_instance.material_override = ShaderMaterial.new()
+	mesh_instance.material_override.shader = shader
 
 	# img_len = size + 1
 	# img = Image.create(img_len, img_len, false, Image.FORMAT_RF)
@@ -64,8 +70,7 @@ func _init(i: Vector2i, size: int, meshes: Array): # material: ShaderMaterial, g
 	# heightmap.map_depth = img_len
 	# heightmap.map_width = img_len
 
-	mesh_instance.mesh = lod.meshes[lod.index][lod.type]
-	# mesh_instance.material_override.set_shader_parameter("heightmap", texture)
+	
 
 	# height_scale = mesh_instance.material_override.get_shader_parameter("height_scale")
 
@@ -75,9 +80,7 @@ func _init(i: Vector2i, size: int, meshes: Array): # material: ShaderMaterial, g
 	add_child(collision)
 
 
-func set_material(material: ShaderMaterial, get_noise: Callable):
-	mesh_instance.material_override = material.duplicate()
-	var height: float = mesh_instance.material_override.get_shader_parameter("height_scale")
+func set_material(height: float, get_noise: Callable):
 
 	for y in heightmap.len:
 		for x in heightmap.len:
@@ -88,17 +91,32 @@ func set_material(material: ShaderMaterial, get_noise: Callable):
 	heightmap.texture.update(heightmap.image)
 
 	mesh_instance.material_override.set_shader_parameter("heightmap", heightmap.texture)
+	mesh_instance.material_override.set_shader_parameter("height_scale", height)
+
+	var normal_map:= Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_RGB8)
+
+	for y in heightmap.len:
+		for x in heightmap.len:
+			var value:= normal_color(x,y,heightmap.image, heightmap.len)
+			normal_map.set_pixel(x,y, value)
+
+	mesh_instance.material_override.set_shader_parameter("normalmap", ImageTexture.create_from_image(normal_map))
+
+	var path:= "res://data/{y}_{x}.png"
+	normal_map.save_png(path.format({x=index.x,y=index.y}))
 
 	if height != heightmap.height:
 		heightmap.height = height
 
-		var map_data = heightmap.image.get_data().to_float32_array()
+		collision.shape.update_map_data_from_image(heightmap.image, 0.0, height)
 
-		for i in map_data.size():
-			map_data[i] *= height
+		# var map_data = heightmap.image.get_data().to_float32_array()
 
-		heightmap.shape.map_data = map_data
-		collision.shape = heightmap.shape
+		# for i in map_data.size():
+		# 	map_data[i] *= height
+
+		# heightmap.shape.map_data = map_data
+		# collision.shape = heightmap.shape
 
 	pass
 
@@ -152,6 +170,20 @@ func save():
 # 	img.set_data(img_len, img_len, false, Image.FORMAT_RF, data)
 # 	mesh_instance.material_override.set_shader_parameter("heightmap", ImageTexture.create_from_image(img))
 
-class Collision extends CollisionShape3D:
-	var chunk: Chunk
+func normal_color(x: int, y: int, img: Image, size: int) -> Color:
+
+	# var h_c = img.get_pixel(x, y).r
+	var h_dx = img.get_pixel(min(x + 1, size - 1), y).r
+	var h_sx = img.get_pixel(max(x - 1, 0), y).r
+	var h_t = img.get_pixel(x, max(y - 1, 0)).r
+	var h_b = img.get_pixel(x, min(y + 1, size - 1)).r
+
+	var dx = (h_dx - h_sx) * 0.5 * 5.0
+	var dy = (h_t - h_b) * 0.5 * 5.0
+	var dz = 1.0
+
+	var normal = Vector3(dx, dy, dz).normalized()
+	var color = Color((normal.x + 1.0) * 0.5, (normal.y + 1.0) * 0.5, (normal.z + 1.0) * 0.5)
+
+	return color
 
