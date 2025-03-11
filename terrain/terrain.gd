@@ -25,7 +25,13 @@ var build_chunk:= true
 @export var set_noise: Array[FastNoiseLite] = []:
 	set(value): set_noise = value;
 
+@export var set_curve:= Curve.new()
+
+@export var set_gradient:= GradientTexture2D.new():
+	set(value): set_gradient = value; if set_gradient: set_gradient.changed.connect(update_material)
+
 @export_tool_button("Update terrain") var set_update = func(): update_terrain()
+@export_tool_button("Update material") var set_update_material = update_material;
 
 @export_group('Edit', 'edit_')
 @export var edit_brush_preview:= GradientTexture2D.new():
@@ -79,12 +85,18 @@ func get_noise(x: float, y: float) -> float:
 	var amplitude:= 1.0
 
 	for noise in set_noise:
-		value += noise.get_noise_2d(x,y) / set_noise.size()
+
+		value += noise.get_noise_2d(x,y)
+		value /= set_noise.size()
 		value *= amplitude
 		amplitude += 0.5
-	
+
+
+
+	# Normalizza e applica smoothstep
 	value = clamp(value, -1.0, 1.0) + 1.0
 	value *= 0.5
+	value = set_curve.sample(value)
 	value = smoothstep(0.0, 1.0, value)
 
 	return value
@@ -160,7 +172,9 @@ func update_terrain():
 		pass
 
 func update_material():
-	print('update material')
+	chunks.each(func(chunk):
+		chunk.update_material({ gradient=set_gradient })
+	)
 	pass
 
 

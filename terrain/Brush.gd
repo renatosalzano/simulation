@@ -50,7 +50,7 @@ var update_collision = false
 
 # signal painting_process
 
-func _physics_process(_delta: float) -> void:
+func _process(_delta: float) -> void:
 
 	if enabled and Time.get_ticks_msec() - last_time > tickrate:
 		last_time = Time.get_ticks_msec()
@@ -71,7 +71,10 @@ func _physics_process(_delta: float) -> void:
 				
 				update_collision = tick % 60 == 0
 				if tick % 2 == 0:
-					painting(result)
+					var chunks = painting(result)
+					for chunk in chunks:
+						if chunk: chunk.update_texture()
+						pass
 
 				if tick % 60 == 0: tick = 0
 				tick += 1
@@ -100,7 +103,8 @@ func set_pixel(chunk: Chunk, x: int, y: int, alpha: float) -> Chunk:
 	return chunk
 
 
-func painting(res: Dictionary):
+var chunk_to_update: Array[Chunk] = [null, null, null, null, null, null, null, null, null]
+func painting(res: Dictionary) -> Array[Chunk]:
 
 	if update_collision:
 		print('update')
@@ -122,8 +126,7 @@ func painting(res: Dictionary):
 	overflow.bl = overflow.b && overflow.l
 	overflow.br = overflow.b && overflow.r
 	
-
-	var chunk_to_update: Array[Chunk] = []
+	chunk_to_update[4] = chunk
 
 	for x in brush_size:
 		for y in brush_size:
@@ -157,44 +160,39 @@ func painting(res: Dictionary):
 			# TOP
 			if overflow.tl && chunk.neighbors[0] != null:
 				if Y <= 0 && X <= 0:
-					chunk_to_update.append(set_pixel(chunk.neighbors[0], X0, Y0, alpha))
+					chunk_to_update[0] = set_pixel(chunk.neighbors[0], X0, Y0, alpha)
 
 			if overflow.t && chunk.neighbors[1] != null:
 				if Y <= 0 && RX:
-					chunk_to_update.append(set_pixel(chunk.neighbors[1], X, Y0, alpha))
+					chunk_to_update[1] = set_pixel(chunk.neighbors[1], X, Y0, alpha)
 
 			if overflow.tr && chunk.neighbors[2] != null:
 				if Y <= 0 && X >= i:
-					chunk_to_update.append(set_pixel(chunk.neighbors[2], X0, Y0, alpha))
+					chunk_to_update[2] = set_pixel(chunk.neighbors[2], X0, Y0, alpha)
 
 			# CENTER
 			if overflow.l && chunk.neighbors[3] != null:
 				if X <= 0 && RY:
-					chunk_to_update.append(set_pixel(chunk.neighbors[3], X0, Y, alpha))
+					chunk_to_update[3] = set_pixel(chunk.neighbors[3], X0, Y, alpha)
 
 			if overflow.r && chunk.neighbors[5] != null:
 				if X >= i && RY:
-					chunk_to_update.append(set_pixel(chunk.neighbors[5], X0, Y, alpha))
+					chunk_to_update[5] = set_pixel(chunk.neighbors[5], X0, Y, alpha)
 			
 			# BOTTOM
 			if overflow.bl && chunk.neighbors[6] != null:
 				if Y >= i && X <= 0: 
-					chunk_to_update.append(set_pixel(chunk.neighbors[6], X0, Y0, alpha))
+					chunk_to_update[6] = set_pixel(chunk.neighbors[6], X0, Y0, alpha)
 
 			if overflow.b && chunk.neighbors[7] != null:
 				if Y >= i && RX:
-					chunk_to_update.append(set_pixel(chunk.neighbors[7], X, Y0, alpha))
+					chunk_to_update[7] = set_pixel(chunk.neighbors[7], X, Y0, alpha)
 
 			if overflow.br && chunk.neighbors[8] != null:
 				if Y >= i && X >= i:
-					chunk_to_update.append(set_pixel(chunk.neighbors[8], X0, Y0, alpha))
+					chunk_to_update[8] = set_pixel(chunk.neighbors[8], X0, Y0, alpha)
 
-
-	chunk.update_img()
-	for c in chunk_to_update:
-		c.update_img()
-
-	pass
+	return chunk_to_update
 
 
 func test_paint(res: Dictionary):

@@ -5,7 +5,7 @@ enum TRANSITION_TYPE { CENTER, TOP, LEFT, BOTTOM, RIGHT, TOP_L, TOP_R, BOTTOM_L,
 static func generate(size: int):
 
 	var subdivisions: Array[int] = []
-	var subdiv: int = size
+	var subdiv: int = size - 1
 
 	var i: int = 0
 
@@ -59,7 +59,7 @@ static func draw_tile(size: Vector2, subdivisions: Array[int], lod_index, transi
 	var vertices_on_edge:= subdiv + 2
 
 	
-	var texture_size:= size.x + 1
+	var texture_size:= size.x
 	var edges:= vertices_on_edge - 1
 	var pixel:= 1.0 / texture_size
 	var half_pixel:= pixel / 2.0

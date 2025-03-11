@@ -35,9 +35,9 @@ func _init(i: Vector2i, size: int, meshes: Array): # material: ShaderMaterial, g
 	lod.meshes = meshes
 	neighbors.resize(9)
 
-	heightmap.len = size + 1
+	heightmap.len = size
 	heightmap.half_size = size / 2
-	heightmap.offset = Vector2(index) * Vector2(size, size)
+	heightmap.offset = Vector2(index) * Vector2(size - 1, size - 1)
 	heightmap.image = Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_RF)
 	heightmap.texture = ImageTexture.create_from_image(heightmap.image)
 
@@ -50,6 +50,8 @@ func _init(i: Vector2i, size: int, meshes: Array): # material: ShaderMaterial, g
 
 	mesh_instance.material_override = ShaderMaterial.new()
 	mesh_instance.material_override.shader = shader
+
+	
 
 	# img_len = size + 1
 	# img = Image.create(img_len, img_len, false, Image.FORMAT_RF)
@@ -93,22 +95,24 @@ func set_material(height: float, get_noise: Callable):
 	mesh_instance.material_override.set_shader_parameter("heightmap", heightmap.texture)
 	mesh_instance.material_override.set_shader_parameter("height_scale", height)
 
-	var normal_map:= Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_RGB8)
-
-	for y in heightmap.len:
-		for x in heightmap.len:
-			var value:= normal_color(x,y,heightmap.image, heightmap.len)
-			normal_map.set_pixel(x,y, value)
-
-	mesh_instance.material_override.set_shader_parameter("normalmap", ImageTexture.create_from_image(normal_map))
-
 	var path:= "res://data/{y}_{x}.png"
-	normal_map.save_png(path.format({x=index.x,y=index.y}))
+	heightmap.image.save_png(path.format({x=index.x,y=index.y}))
 
-	if height != heightmap.height:
-		heightmap.height = height
+	# var normal_map:= Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_RGB8)
 
-		collision.shape.update_map_data_from_image(heightmap.image, 0.0, height)
+	# for y in heightmap.len:
+	# 	for x in heightmap.len:
+	# 		var value:= normal_color(x,y,heightmap.image, heightmap.len)
+	# 		normal_map.set_pixel(x,y, value)
+
+	# mesh_instance.material_override.set_shader_parameter("normalmap", ImageTexture.create_from_image(normal_map))
+
+	# var path:= "res://data/{y}_{x}.png"
+	# normal_map.save_png(path.format({x=index.x,y=index.y}))
+
+	heightmap.height = height
+	collision.shape.update_map_data_from_image(heightmap.image, 0.0, height)
+		
 
 		# var map_data = heightmap.image.get_data().to_float32_array()
 
@@ -120,7 +124,9 @@ func set_material(height: float, get_noise: Callable):
 
 	pass
 
-
+func update_material(dict: Dictionary):
+	for key in dict:
+		mesh_instance.material_override.set_shader_parameter(key, dict[key])
 
 # func generate_collision():
 # 	var map_data = img.get_data().to_float32_array()
@@ -151,13 +157,16 @@ var map_data_update:= {}
 
 func set_pixel(x: int, y: int, color: Color):
 	heightmap.image.set_pixel(x, y, color)
-	map_data_update[y * img_len + x] = color.r * heightmap.height
+	# map_data_update[y * img_len + x] = color.r * heightmap.height
 
 	# map_data_update[y * img_len + x] = color.r * height_scale
 
-func update_img():
+func update_texture():
 	heightmap.texture.update(heightmap.image)
-	# questa funzione viene chiamata a pennellata finita
+	
+
+func deferred_update():
+	heightmap.texture.update(heightmap.image)
 
 func set_LOD(lod_index: int):
 	lod.index = lod_index
