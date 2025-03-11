@@ -108,6 +108,9 @@ func update_terrain():
 	if not is_node_ready():
 		return
 
+	# build_chunk = true
+	# build_mesh = true
+
 	if build_chunk:
 
 		build_chunk = false

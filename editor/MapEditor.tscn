@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://d22mvt374n2rm"]
+[gd_scene load_steps=6 format=3 uid="uid://d22mvt374n2rm"]
 
 [ext_resource type="PackedScene" uid="uid://birtcuc83sckl" path="res://terrain/Terrain.tscn" id="1_tepic"]
 [ext_resource type="PackedScene" uid="uid://cop8bh0ahr3sg" path="res://Player.tscn" id="2_bjlu3"]
+[ext_resource type="PackedScene" uid="uid://coire5nj873ek" path="res://editor/ui/TerrainToolbar.tscn" id="3_lutxp"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_bjlu3"]
 
@@ -24,3 +25,5 @@ mesh = SubResource("SphereMesh_bjlu3")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
 shape = SubResource("SphereShape3D_lutxp")
+
+[node name="TerrainToolbar" parent="." instance=ExtResource("3_lutxp")]

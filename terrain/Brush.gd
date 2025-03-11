@@ -69,7 +69,7 @@ func _process(_delta: float) -> void:
 			if result.collider is Chunk:
 				position = result.position
 				
-				update_collision = tick % 60 == 0
+				update_collision = tick % 30 == 0
 				if tick % 2 == 0:
 					var chunks = painting(result)
 					for chunk in chunks:
@@ -106,9 +106,6 @@ func set_pixel(chunk: Chunk, x: int, y: int, alpha: float) -> Chunk:
 var chunk_to_update: Array[Chunk] = [null, null, null, null, null, null, null, null, null]
 func painting(res: Dictionary) -> Array[Chunk]:
 
-	if update_collision:
-		print('update')
-
 	var chunk: Chunk = res.collider
 	var center = chunk.snap_to_pixel(res.position)
 	var pixel_offset = Vector2i(center.x - brush_ray, center.y - brush_ray)
@@ -125,7 +122,10 @@ func painting(res: Dictionary) -> Array[Chunk]:
 	overflow.tr = overflow.t && overflow.r
 	overflow.bl = overflow.b && overflow.l
 	overflow.br = overflow.b && overflow.r
-	
+
+
+	chunk_to_update.clear()
+	chunk_to_update.resize(9)
 	chunk_to_update[4] = chunk
 
 	for x in brush_size:

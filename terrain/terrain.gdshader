@@ -2,7 +2,8 @@ shader_type spatial;
 
 //render_mode wireframe;
 
-uniform sampler2D heightmap: filter_nearest_mipmap;
+
+uniform sampler2D heightmap: filter_linear_mipmap;
 //uniform sampler2D normalmap: filter_linear;
 uniform sampler2D gradient: repeat_disable;
 
@@ -10,6 +11,12 @@ uniform float height_scale;
 
 varying float height;
 //varying float h = 0.0;
+
+float get_height(vec2 uv) {
+  return textureLod(heightmap, uv, 0).r;
+}
+
+
 
 vec3 heightToNormal(float h,float strength, vec2 uv, vec3 vertex) {
 
@@ -39,6 +46,8 @@ void vertex() {
 	height = texture(heightmap, UV).r * height_scale;
 
 	VERTEX.y = height;
+
+	
 }
 
 void fragment() {
@@ -69,13 +78,15 @@ void fragment() {
 	//float gradient_uv = (model_vertex.y / height) + 0.5;
 	//ALBEDO = texture(gradient, vec2(gradient_uv)).rgb;
 
-	ALBEDO = texture(heightmap, UV).rrr;
+	//ALBEDO = texture(heightmap, UV).rrr;
 
-    //ALBEDO =  texture(heightmap, UV).rrr;
+    ALBEDO =  textureLod(heightmap, UV, 0).rrr;
+
+	
 	//NORMAL = heightToNormal(height, 0.01, UV, VERTEX);
 
 
-	float edge = 0.01;
+	float edge = 0.005;
 	if (UV.x < edge || UV.x > (1.0 - edge) || UV.y < edge || UV.y > (1.0 - edge)) {
 		ALBEDO += vec3(0.1,0,0);
 	}

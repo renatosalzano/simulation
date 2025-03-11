@@ -38,12 +38,13 @@ func _init(i: Vector2i, size: int, meshes: Array): # material: ShaderMaterial, g
 	heightmap.len = size
 	heightmap.half_size = size / 2
 	heightmap.offset = Vector2(index) * Vector2(size - 1, size - 1)
-	heightmap.image = Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_RF)
+	heightmap.image = Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_R8)
 	heightmap.texture = ImageTexture.create_from_image(heightmap.image)
 
 	# heightmap.shape.map_width = heightmap.len
 	# heightmap.shape.map_depth = heightmap.len
-
+	var s := size / (size - 1.0)
+	collision.scale = Vector3(s,s,s)
 	collision.shape = heightmap.shape
 
 	mesh_instance.mesh = lod.meshes[lod.index][lod.type]
@@ -89,14 +90,15 @@ func set_material(height: float, get_noise: Callable):
 			var value:= 0.0
 			value = get_noise.call(float(x + heightmap.offset.x), float(y + heightmap.offset.y))
 			heightmap.image.set_pixel(x,y, Color(value, 0, 0))
-
+	
+	heightmap.image.generate_mipmaps(true)
 	heightmap.texture.update(heightmap.image)
 
 	mesh_instance.material_override.set_shader_parameter("heightmap", heightmap.texture)
 	mesh_instance.material_override.set_shader_parameter("height_scale", height)
 
-	var path:= "res://data/{y}_{x}.png"
-	heightmap.image.save_png(path.format({x=index.x,y=index.y}))
+	# var path:= "res://data/{y}_{x}.exr"
+	# temp.save_exr(path.format({x=index.x,y=index.y}))
 
 	# var normal_map:= Image.create(heightmap.len, heightmap.len, true, Image.FORMAT_RGB8)
 
@@ -157,12 +159,14 @@ var map_data_update:= {}
 
 func set_pixel(x: int, y: int, color: Color):
 	heightmap.image.set_pixel(x, y, color)
-	# map_data_update[y * img_len + x] = color.r * heightmap.height
+	map_data_update[y * img_len + x] = color.r * heightmap.height
 
-	# map_data_update[y * img_len + x] = color.r * height_scale
 
-func update_texture():
+func update_texture(update_collision = false):
 	heightmap.texture.update(heightmap.image)
+	if update_collision:
+		collision.shape.update_map_data_from_image(heightmap.image, 0.0, heightmap.height)
+
 	
 
 func deferred_update():
