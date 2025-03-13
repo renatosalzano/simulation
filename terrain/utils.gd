@@ -5,7 +5,7 @@ enum TRANSITION_TYPE { CENTER, TOP, LEFT, BOTTOM, RIGHT, TOP_L, TOP_R, BOTTOM_L,
 static func generate(size: int):
 
 	var subdivisions: Array[int] = []
-	var subdiv: int = size - 1
+	var subdiv: int = size
 
 	var i: int = 0
 
@@ -26,13 +26,60 @@ static func generate(size: int):
 	var chunk_size = Vector2(size, size)
 
 	for lod_index in lod_meshes.size():
-		lod_meshes[lod_index] = []
-		lod_meshes[lod_index].resize(9)
-
-		for transition_index in 9:
-			lod_meshes[lod_index][transition_index] = draw_tile(chunk_size, subdivisions, lod_index, transition_index)
+		lod_meshes[lod_index] = draw_LOD(chunk_size, subdivisions, lod_index)
 
 	return lod_meshes
+
+	# for lod_index in lod_meshes.size():
+	# 	lod_meshes[lod_index] = []
+	# 	lod_meshes[lod_index].resize(9)
+
+	# 	for transition_index in 9:
+	# 		lod_meshes[lod_index][transition_index] = draw_tile(chunk_size, subdivisions, lod_index, transition_index)
+
+	# return lod_meshes
+
+
+static func draw_LOD(size: Vector2, subdivisions: Array[int], lod_index) -> Mesh:
+
+	var subdiv:= subdivisions[lod_index]
+
+	var set_aabb:= func (m):
+		m.custom_aabb.position = Vector3(-size.x / 2, -1500, -size.y / 2)
+		m.custom_aabb.size = Vector3(size.x, 5000, size.y)
+		return m
+
+	var mesh:= PlaneMesh.new()
+	mesh.subdivide_depth = subdiv
+	mesh.subdivide_width = subdiv
+	mesh.size = size
+	mesh.add_uv2 = true
+
+	var mesh_arrays = mesh.get_mesh_arrays()
+	var uv_1: PackedVector2Array = mesh_arrays[ArrayMesh.ARRAY_TEX_UV]
+
+	# var texture_size:= size.x
+	# var edges:= subdiv + 1
+	var texture_size:= size.x + 1
+	var edges:= subdiv + 1
+	var pixel:= 1.0 / texture_size
+	var half_pixel:= pixel / 2.0
+
+	var factor = int(texture_size / edges)
+	pixel = pixel * factor
+
+	var idx:= 0
+	var uv_cycle:= range(subdiv + 1, -1, -1)
+
+	for y in uv_cycle:
+		for x in uv_cycle:
+			uv_1[idx] = Vector2(half_pixel, half_pixel) + Vector2(pixel * x, pixel * y)
+			idx += 1
+
+	var array_mesh = ArrayMesh.new()
+	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_arrays)
+	set_aabb.call(array_mesh)
+	return array_mesh
 
 
 static func draw_tile(size: Vector2, subdivisions: Array[int], lod_index, transition_type: int) -> ArrayMesh:

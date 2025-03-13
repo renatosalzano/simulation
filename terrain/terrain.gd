@@ -19,8 +19,8 @@ var build_chunk:= true
 @export var set_height:= 50.0:
 	set(value): set_height = value; update_terrain()
 
-@export var set_lod: int = 0:
-	set(value): set_lod = max(0,value); chunks.each(func(chunk): chunk.set_LOD(set_lod))
+# @export var set_lod: int = 0:
+# 	set(value): set_lod = max(0,value); chunks.each(func(chunk): chunk.set_LOD(set_lod))
 
 @export var set_noise: Array[FastNoiseLite] = []:
 	set(value): set_noise = value;
@@ -49,13 +49,16 @@ var build_chunk:= true
 @export var edit_debug:= false:
 	set(value): edit_debug = value; debug_brush()
 
+
+var chunks:= Chunks.new(self)
+
 @onready var collision: CollisionShape3D = $StaticBody3D/CollisionShape3D
 
 var brush = Brush.new(self)
 var camera: Camera3D
 
 var meshes:= []
-var chunks:= Chunks.new(self)
+
 var resource:= TerrainResource.new()
 
 func _ready() -> void:
@@ -64,16 +67,16 @@ func _ready() -> void:
 		camera = EditorInterface.get_editor_viewport_3d().get_camera_3d()
 		brush.set_brush(edit_brush, edit_brush_preview)
 
-	var cached_meshes = resource.load_meshes()
+	# var cached_meshes = resource.load_meshes()
 
-	if cached_meshes is Array:
-		build_mesh = false
-		meshes = cached_meshes
-		print("stored meshes")
-	else:
-		build_mesh = true
+	# if cached_meshes is Array:
+	# 	build_mesh = false
+	# 	meshes = cached_meshes
+	# 	print("stored meshes")
+	# else:
+	# 	build_mesh = true
 	
-	print("build mesh ", build_mesh)
+	# print("build mesh ", build_mesh)
 
 	update_terrain()
 
@@ -108,8 +111,8 @@ func update_terrain():
 	if not is_node_ready():
 		return
 
-	# build_chunk = true
-	# build_mesh = true
+	build_chunk = true
+	build_mesh = true
 
 	if build_chunk:
 
@@ -118,7 +121,7 @@ func update_terrain():
 		if build_mesh:
 			build_mesh = false
 			meshes = utils.generate(set_chunk.z)
-			resource.save_meshes(meshes)
+			# resource.save_meshes(meshes)
 
 		var offset:= Vector2(
 			(set_chunk.x - 1) * -set_chunk.z / 2.0,
@@ -131,7 +134,9 @@ func update_terrain():
 
 		chunks = Chunks.new(self)
 
+		var lod:= 0
 		for x in set_chunk.x:
+			
 			for y in set_chunk.y:
 
 				var reposition = Vector3(offset.x + (x * set_chunk.z), 0, offset.y + (y * set_chunk.z))
@@ -140,6 +145,7 @@ func update_terrain():
 				var chunk:= Chunk.new(i, set_chunk.z, meshes)
 				chunk.set_material(set_height, get_noise)
 				chunk.translate(reposition)
+				chunk.set_LOD(lod)
 
 				collision.shape.update_map_data_from_image(chunk.heightmap.image, 0.0, set_height)
 				collision.position = reposition
@@ -147,6 +153,8 @@ func update_terrain():
 				chunks.add(i, chunk)
 				
 				pass
+		
+			lod += 1
 
 		# 0 1 2
 		# 3 . 5
@@ -166,7 +174,10 @@ func update_terrain():
 				for i in d.size():
 					var neighbor_idx = idx + d[i]
 					if chunks.has(neighbor_idx):
-						chunk.neighbors[i] = chunks.get_chunk(neighbor_idx)
+						chunk.set_neighbor(i, chunks.get_chunk(neighbor_idx))
+
+				print(idx, chunk.neighbors)
+				chunk.gen_normal()
 	else:
 		chunks.each(func(chunk):
 			chunk.set_material(set_height, get_noise)
