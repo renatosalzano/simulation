@@ -12,7 +12,7 @@ var quad: QuadTree
 var tile: TerrainChunk
 
 
-func create_tile_mesh(size: int, subdiv: int) -> ArrayMesh:
+func create_tile_mesh(size: int, subdiv: int) -> Mesh:
 
 	var mesh:= PlaneMesh.new()
 	mesh.subdivide_width = subdiv
@@ -20,29 +20,31 @@ func create_tile_mesh(size: int, subdiv: int) -> ArrayMesh:
 	mesh.size = Vector2(size, size)
 	mesh.add_uv2 = true
 
-	var mesh_arrays = mesh.get_mesh_arrays()
-	var uv_1: PackedVector2Array = mesh_arrays[ArrayMesh.ARRAY_TEX_UV]
+	return mesh
 
-	var texture_size:= size + 1
-	var edges:= subdiv + 1
-	var pixel:= 1.0 / texture_size
-	var half_pixel:= pixel / 2.0
+	# var mesh_arrays = mesh.get_mesh_arrays()
+	# var uv_1: PackedVector2Array = mesh_arrays[ArrayMesh.ARRAY_TEX_UV]
 
-	var factor = int(texture_size / edges)
-	pixel = pixel * factor
+	# var texture_size:= size + 1
+	# var edges:= subdiv + 1
+	# var pixel:= 1.0 / texture_size
+	# var half_pixel:= pixel / 2.0
 
-	var idx:= 0
-	var uv_cycle:= range(subdiv + 1, -1, -1)
+	# var factor = int(texture_size / edges)
+	# pixel = pixel * factor
 
-	for y in uv_cycle:
-		for x in uv_cycle:
-			uv_1[idx] = Vector2(half_pixel, half_pixel) + Vector2(pixel * x, pixel * y)
-			idx += 1
+	# var idx:= 0
+	# var uv_cycle:= range(subdiv + 1, -1, -1)
 
-	var array_mesh = ArrayMesh.new()
-	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_arrays)
+	# for y in uv_cycle:
+	# 	for x in uv_cycle:
+	# 		uv_1[idx] = Vector2(half_pixel, half_pixel) + Vector2(pixel * x, pixel * y)
+	# 		idx += 1
 
-	return array_mesh
+	# var array_mesh = ArrayMesh.new()
+	# array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_arrays)
+
+	# return array_mesh
 
 
 

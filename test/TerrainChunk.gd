@@ -61,7 +61,7 @@ func _init(i: Vector2i, size: int, meshes: Array, material: Material) -> void:
 
 
 func enable():
-	# print('max lod ', lods[-1])
+	print('max lod ', lods[-1])
 	if Engine.is_editor_hint():
 		camera = EditorInterface.get_editor_viewport_3d().get_camera_3d()
 	each(func(tile): 
@@ -83,7 +83,7 @@ func update(camera_position: Vector3):
 		printraw("\r camera: "+ str(distance))
 
 		if distance >= lods[-1]:
-			tile.set_lod(tile.min_lod)
+			tile.set_lod(tile.min_lod, camera_position)
 		else:
 			var lod = 0
 
@@ -147,7 +147,6 @@ class Tile extends MeshInstance3D:
 		material_override.set_shader_parameter("hm", hm)
 		material_override.set_shader_parameter("level", level)
 		material_override.set_shader_parameter("index", index)
-		material_override.set_shader_parameter("quad_size", 1.0 / 64.0)
 		material_override.set_shader_parameter("quad_scale", 1.0 / 8.0)
 		material_override.set_shader_parameter("is_tile", true)
 		material_override.set_shader_parameter("min_LOD", min_lod)
@@ -163,9 +162,7 @@ class Tile extends MeshInstance3D:
 		else:
 			lod = min(lod, min_lod)
 			mesh = meshes[lod]
-
-			material_override.set_shader_parameter("LOD", lod)
-			material_override.set_shader_parameter("camera_positon", camera_position)
+			set_shader({ LOD=lod, camera_position=camera_position })
 
 
 	func set_global_position_to_shader():

@@ -30,7 +30,7 @@ visible = false
 mesh = SubResource("CylinderMesh_syuel")
 
 [node name="Test" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -633.241, -0.000366211, -574.767)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1899.63, 46.3581, -188.734)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Test"]
 visible = false
