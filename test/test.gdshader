@@ -84,7 +84,9 @@ void vertex() {
 		vec3 tile_left = global_position + vec3(-64, 0, 0);
 		vec3 tile_right = global_position + vec3(64, 0, 0);
 		
+		// LOD
 		if (VERTEX_ID % 2 != 0) {
+			
 			if (calc_LOD(tile_top) > LOD) {
 				if (UV2.y == 0.0) {
 					//float h1 = texture(hm, vec2(UV.x - vertex_step, UV.y)).r * height_scale;
