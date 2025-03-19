@@ -66,7 +66,8 @@ func set_material(height: float, get_noise: Callable):
 	for y in heightmap.len:
 		for x in heightmap.len:
 			var value:= 0.0
-			value = get_noise.call(float(x + heightmap.offset.x), float(y + heightmap.offset.y))
+			value = get_noise.call(float(x + heightmap.offset.x), float(y + heightmap.offset.y)) + 1.0
+			value /= 2.0
 			heightmap.image.set_pixel(x,y, Color(value, 0, 0))
 	
 	heightmap.image.generate_mipmaps(true)

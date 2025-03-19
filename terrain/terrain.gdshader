@@ -1,6 +1,6 @@
 shader_type spatial;
 
-//render_mode wireframe;
+render_mode wireframe;
 
 
 uniform sampler2D heightmap: filter_linear_mipmap;

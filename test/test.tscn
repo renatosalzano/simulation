@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3 uid="uid://sdtk7rcsg7mt"]
+
+[ext_resource type="Script" uid="uid://b1dbiglubr5g3" path="res://test/test.gd" id="1_syuel"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_syuel"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_syuel"]
+top_radius = 1432.0
+bottom_radius = 1448.0
+cap_top = false
+cap_bottom = false
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_syuel"]
+albedo_color = Color(0, 0.620332, 0.38467, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_8a8pi"]
+material = SubResource("StandardMaterial3D_syuel")
+top_radius = 32.0
+bottom_radius = 96.0
+rings = 2
+cap_top = false
+cap_bottom = false
+
+[node name="Test" type="Node3D"]
+script = ExtResource("1_syuel")
+noise = SubResource("FastNoiseLite_syuel")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("CylinderMesh_syuel")
+
+[node name="Test" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -633.241, -0.000366211, -574.767)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Test"]
+visible = false
+mesh = SubResource("CylinderMesh_8a8pi")
