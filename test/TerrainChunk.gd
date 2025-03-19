@@ -50,9 +50,9 @@ func _init(i: Vector2i, size: int, meshes: Array, material: Material) -> void:
 
 	for x in 8:
 		for y in 8:
-			var tile_index = Vector2i(x, y)
+			var tile_index = Vector2i((index.x * 8) + x, (index.y * 8) + y)
 			var reposition = Vector3(offset.x + (x * tile_size), 0, offset.y + (y * tile_size))
-			var tile = Tile.new(tile_index, meshes, shader, hm_region_texture)
+			var tile = Tile.new(tile_index, meshes, shader, hm_texture)
 
 			tile.set_shader({ max_distance_LOD=lods[-1] })
 
@@ -78,7 +78,7 @@ func disable():
 func update(camera_position: Vector3):
 	# printraw("\r" + str(camera_position))
 
-	each(func(tile): 
+	each(func(tile):
 		var distance = tile.global_position.distance_to(camera_position)
 		printraw("\r camera: "+ str(distance))
 
@@ -136,7 +136,7 @@ class Tile extends MeshInstance3D:
 
 		var size:= 64
 
-		var level:= 3.0
+		var level:= 5.0
 		# var tile_size:= 1.0 / 
 		# var tile_size:= 2049.0 / pow(2.0, 5) + 1.0
 
@@ -163,10 +163,6 @@ class Tile extends MeshInstance3D:
 			lod = min(lod, min_lod)
 			mesh = meshes[lod]
 			set_shader({ LOD=lod, camera_position=camera_position })
-
-
-	func set_global_position_to_shader():
-		material_override.set_shader_parameter("global_position", global_position)
 
 	
 	func set_shader(dict: Dictionary):

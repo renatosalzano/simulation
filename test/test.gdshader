@@ -58,29 +58,24 @@ float calc_middle(vec2 uv, vec2 offset) {
 
 void vertex() {
 
-	float pixel_size = 1.0 / 2049.;
-	float half_pixel = pixel_size / 2.0;
+	float pixel = 1.0 / 2049.;
+	float half_pixel = pixel / 2.0;
 	float factor = pow(2.0, level);
-	float size = (2048.0 / factor) + 1.;
 	
-	if (UV.x == 0.0 || UV.x > 0.99 || UV.y == 0.0 || UV.y > 0.99) {
-		//ALBEDO = color;
-	}
+	float edges = 2048. / factor;
 	
-	if (level > 0.) {
-		//float uv_scale = 1.0 / pow(2.0, level);
-		//vec2 offset = index * (uv_scale - (pixel_size / 2.0));
-		//UV = UV * quad_scale + offset;
-		//float scale = 1.0 / factor;
-		//vec2 offset = index * (pixel_size * size);
-		//UV = UV * scale + offset;
-	}
+	int x = int(UV.x * float(edges));
+    int y = int(UV.y * float(edges));
 	
+	vec2 offset = index * (pixel * edges + 1.0);
 	
+	UV = offset + vec2(half_pixel, half_pixel) + vec2(float(x) * pixel, float(y) * pixel);
+	
+	VERTEX.y = texture(hm, UV).r * 50.;
 	
 	if (is_tile) {
 		
-		float p_size = 1.0 / 513.;
+		float vertex_step = pixel * pow(2.0, float(LOD));
 		
 		float distance_to = distance(camera_position, global_position);
 		
@@ -89,22 +84,39 @@ void vertex() {
 		vec3 tile_left = global_position + vec3(-64, 0, 0);
 		vec3 tile_right = global_position + vec3(64, 0, 0);
 		
-		if (calc_LOD(tile_top) > LOD) {
-			if (UV2.y == 0.0 && VERTEX_ID % 2 != 0) {
-				float h1 = texture(hm, vec2(UV.x, UV.y - p_size)).r * height_scale;
-				float h2 = texture(hm, vec2(UV.x, UV.y + p_size)).r * height_scale;
-				//VERTEX.y = 50.0;
+		if (VERTEX_ID % 2 != 0) {
+			if (calc_LOD(tile_top) > LOD) {
+				if (UV2.y == 0.0) {
+					//float h1 = texture(hm, vec2(UV.x - vertex_step, UV.y)).r * height_scale;
+					//float h2 = texture(hm, vec2(UV.x + vertex_step, UV.y)).r * height_scale;
+					VERTEX.y = calc_middle(UV, vec2(vertex_step, 0));
+				}
 			}
+			
+			if (calc_LOD(tile_bottom) > LOD) {
+				if (UV2.y > 0.99) {
+					VERTEX.y = calc_middle(UV, vec2(vertex_step, 0));
+				}
+			}
+			
+			if (calc_LOD(tile_left) > LOD) {
+				if (UV2.x == 0.0) {
+					VERTEX.y = calc_middle(UV, vec2(0, vertex_step));
+				}
+			}
+			
+			if (calc_LOD(tile_right) > LOD) {
+				if (UV2.x > 0.99) {
+					VERTEX.y = calc_middle(UV, vec2(0, vertex_step));
+				}
+			}
+			
 		}
-		
-		
-	} else {
-		
 		
 		
 	}
 	
-	VERTEX.y = texture(hm, UV).r * 50.;
+	
 	
 }
 
@@ -116,7 +128,7 @@ void fragment() {
 	float edge = 0.01;
 	if (UV2.x < edge || UV2.x > (1.0 - edge) || UV2.y < edge || UV2.y > (1.0 - edge)) {
 		//ALBEDO = color;
-		ALBEDO += vec3(0.5,0,0);
+		ALBEDO += vec3(1,0,0);
 	}
 	// Called for every pixel the material is visible on.
 }

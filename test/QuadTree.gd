@@ -96,8 +96,8 @@ var divided:= false
 
 func test(point: Vector3):
 
-	# if leaf && divided:
-	# 	chunk.update(point)
+	if leaf && divided:
+		chunk.update(point)
 
 	var distance:= point.distance_to(global_position) - 384 # max lod in tile
 
@@ -115,21 +115,21 @@ func test(point: Vector3):
 			combine(level)
 
 func subdivide():
-	if leaf: return
-	mesh = null
-	each(func(q): q.mesh = q._mesh)
+	# if leaf: return
 	# mesh = null
-	# if leaf:
-	# 	chunk.enable()
-	# else:
-	# 	each(func(q): q.mesh = q._mesh)
+	# each(func(q): q.mesh = q._mesh)
+	mesh = null
+	if leaf:
+		chunk.enable()
+	else:
+		each(func(q): q.mesh = q._mesh)
 
 
 
 
 func combine(_level: int):
-	# if leaf:
-	# 	chunk.disable()
+	if leaf:
+		chunk.disable()
 	mesh = _mesh if level == _level else null
 	each(func(q): q.combine(_level))
 
