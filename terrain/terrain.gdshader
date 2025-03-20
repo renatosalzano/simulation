@@ -27,13 +27,13 @@ void vertex() {
 	height = texture(heightmap, UV).r * height_scale;
 
 	VERTEX.y = height;
-	
-	
-	
+
+
+
 	float edge = 0.01;
 	float factor = pow(2.0, LOD);
 	vertex_step = (1.0 / float(textureSize(heightmap, 0).x)) * factor;
-	
+
 	if (UV.x > (1.0 - edge)) {
 		if (VERTEX_ID % 2 != 0) {
 			float h1 = texture(heightmap, vec2(UV.x, UV.y - vertex_step)).r * height_scale;
@@ -41,10 +41,10 @@ void vertex() {
 			VERTEX.y = mix(h1, h2, 0.5);
 		}
 	}
-	
+
 	world_pos = MODEL_MATRIX * vec4(VERTEX, 1.0);
 	projected_vertex = (PROJECTION_MATRIX * world_pos).xyz;
-	
+
 }
 
 
@@ -53,7 +53,7 @@ float getDisplacement( float dx, float dy, vec3 uv) {
 }
 
 void fragment() {
-	
+
 	ALBEDO = texture(heightmap, UV).rrr;
 	NORMAL_MAP = texture(normal, UV).xyz;
 
@@ -62,7 +62,7 @@ void fragment() {
 		//ALBEDO = color;
 		ALBEDO += vec3(0.5,0,0);
 	}
-	
+
 	//NORMAL = heightToNormal(height, 0.1, VERTEX, NORMAL);
 
 	// Called for every pixel the material is visible on.

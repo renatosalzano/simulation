@@ -38,6 +38,8 @@ func _init(i: Vector2i, _size: int, min_size: int, meshes: Array, hm: ImageTextu
 	material_override.set_shader_parameter("quad_size", 1.0 / size)
 	material_override.set_shader_parameter("quad_scale", tile_size / 2049.0)
 
+	# print('level {level}: {i}'.format({level=level, i=index}))
+
 	# print(size, " ", 1.0 / pow(2, level))
 
 	_mesh = meshes[level]
@@ -56,7 +58,7 @@ func _init(i: Vector2i, _size: int, min_size: int, meshes: Array, hm: ImageTextu
 
 		for y in 2:
 			for x in 2:
-				var child_index:= Vector2i((index.x * 2) + x, (index.y * 2) + y)
+				var child_index:= Vector2i((index.x * 2) + x, (index.y * 2) + y) if level > 0 else Vector2i(x,y)
 				# print("level {level}: {x} {y}".format({ level=level + 1, x=child_index.x, y=child_index.y }))
 				# var rect = Rect2i(x * child_size, y * child_size, child_size + 1, child_size + 1)
 				# var child_hm:= hm.get_region(rect)

@@ -1,14 +1,11 @@
 @tool
 extends Node3D
 
-@export var level:= 0:
-	set(value): level = max(0, value); if quad: quad.set_level(level)
-
 @export var noise:= FastNoiseLite.new()
 
 @onready var camera: Camera3D = $Test
 # Called when the node enters the scene tree for the first time.
-var quad: QuadTree
+var quads: Array[QuadTree] = []
 var tile: TerrainChunk
 
 
@@ -93,6 +90,18 @@ func generate_mesh(size:= 64) -> Array:
 	return lod_meshes
 
 
+func generate_texture(size: int, offset: Vector2i) -> ImageTexture:
+	var hm:= Image.create(size, size, false, Image.FORMAT_R8)
+
+	for y in size:
+		for x in size:
+			var value:= noise.get_noise_2d(float(x + offset.x), float(y + offset.y))
+			value = clamp(value, -1.0, 1.0) + 1.0
+			value *= 0.5
+			hm.set_pixel(x, y, Color(value, 0, 0))
+
+	return ImageTexture.create_from_image(hm)
+
 
 func _ready() -> void:
 	var meshes:= []
@@ -103,25 +112,25 @@ func _ready() -> void:
 	generate_quad_mesh(size, min_size, meshes)
 	var lod_meshes:= generate_mesh()
 
-	# print(lod_meshes)
-	var hm_size:= size + 1
-	var hm:= Image.create(hm_size, hm_size, false, Image.FORMAT_R8)
+	var offset:= size / 2
 
-	for y in hm_size:
-		for x in hm_size:
-			var value:= noise.get_noise_2d(float(x), float(y))
-			value = clamp(value, -1.0, 1.0) + 1.0
-			value *= 0.5
-			hm.set_pixel(x, y, Color(value, 0, 0))
+	for x in 2:
+		for y in 2:
 
-	var hm_tex:= ImageTexture.create_from_image(hm)
+			var index:= Vector2i(x,y)
+			# print(lod_meshes)
+			var hm:= generate_texture(size + 1, index * (size))
 
-	quad = QuadTree.new(Vector2i(0,0), size, min_size, meshes, hm_tex)
-	add_child(quad)
+			var quad = QuadTree.new(index, size, min_size, meshes, hm)
+			quad.position = Vector3(
+					(x * size) - offset,
+					0,
+					(y * size) - offset
+				)
+			add_child(quad)
 
-	# var leaf = TerrainChunk.new(min_size, lod_meshes)
-
-	quad.set_leafs(lod_meshes, noise)
+			quad.set_leafs(lod_meshes, noise)
+			quads.append(quad)
 	
 	# quad.calc_area()
 
@@ -146,7 +155,8 @@ func _process(_delta: float) -> void:
 		curr_pos = camera.global_position
 		# var distance:= curr_pos.distance_to(quad.global_position)
 
-		quad.test(curr_pos)
+		for quad in quads:
+			quad.test(curr_pos)
 		# tile.update(curr_pos)
 
 

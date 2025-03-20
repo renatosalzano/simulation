@@ -61,7 +61,7 @@ func _init(i: Vector2i, size: int, meshes: Array, material: Material) -> void:
 
 
 func enable():
-	print('max lod ', lods[-1])
+	# print('max lod ', lods[-1])
 	if Engine.is_editor_hint():
 		camera = EditorInterface.get_editor_viewport_3d().get_camera_3d()
 	each(func(tile): 
@@ -80,7 +80,7 @@ func update(camera_position: Vector3):
 
 	each(func(tile):
 		var distance = tile.global_position.distance_to(camera_position)
-		printraw("\r camera: "+ str(distance))
+		# printraw("\r camera: "+ str(distance))
 
 		if distance >= lods[-1]:
 			tile.set_lod(tile.min_lod, camera_position)
