@@ -17,10 +17,6 @@ var chunk: TerrainChunk
 
 var parent: QuadTree
 
-var hm: Image
-var hm_offset: Vector2
-var hm_tex: ImageTexture
-
 func _init(i: Vector2i, _size: int, min_size: int, meshes: Array, hm: ImageTexture, _level:= 0, _root: QuadTree = null) -> void:
 	index = i
 	level = _level
@@ -30,13 +26,13 @@ func _init(i: Vector2i, _size: int, min_size: int, meshes: Array, hm: ImageTextu
 	material_override = material
 	material_override.shader = shader
 
-	var tile_size:= 2049.0 / pow(2.0, level) + 1.0
+	# var tile_size:= 2049.0 / pow(2.0, level) + 1.0
 
 	material_override.set_shader_parameter("level", level)
 	material_override.set_shader_parameter("hm", hm)
 	material_override.set_shader_parameter("index", index)
-	material_override.set_shader_parameter("quad_size", 1.0 / size)
-	material_override.set_shader_parameter("quad_scale", tile_size / 2049.0)
+	# material_override.set_shader_parameter("quad_size", 1.0 / size)
+	# material_override.set_shader_parameter("quad_scale", tile_size / 2049.0)
 
 	# print('level {level}: {i}'.format({level=level, i=index}))
 
@@ -132,8 +128,12 @@ func subdivide():
 func combine(_level: int):
 	if leaf:
 		chunk.disable()
+	
 	mesh = _mesh if level == _level else null
-	each(func(q): q.combine(_level))
+	each(func(q):
+		q.divided = false
+		q.combine(_level)
+	)
 
 
 
@@ -148,20 +148,10 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 
-func set_leafs(meshes: Array, noise: FastNoiseLite):
+func set_leafs(meshes: Array):
 	print('leafs count ', leafs.size())
+	var hm = material_override.get_shader_parameter("hm")
+	
 	for quad in leafs:
-		quad.chunk = TerrainChunk.new(quad.index, 512, meshes, material_override)
+		quad.chunk = TerrainChunk.new(quad.index, 512, meshes, hm)
 		quad.add_child(quad.chunk)
-		
-
-func create_hm(noise: FastNoiseLite):
-
-	for y in 513:
-		for x in 513:
-			var value:= 0.0
-			value = noise.get_noise_2d(float(x + hm_offset.x), float(y + hm_offset.y))
-			hm.set_pixel(x,y, Color(value, 0, 0))
-
-	hm_tex.update(hm)
-

@@ -7,7 +7,7 @@ var tiles:= Node3D.new()
 var camera: Camera3D
 var lods: Array[int] = []
 
-func _init(i: Vector2i, size: int, meshes: Array, material: Material) -> void:
+func _init(i: Vector2i, size: int, meshes: Array, hm: ImageTexture) -> void:
 
 	index = i
 	
@@ -19,13 +19,13 @@ func _init(i: Vector2i, size: int, meshes: Array, material: Material) -> void:
 	# material_data.quad_size = material.get_shader_parameter("quad_size")
 	# material_data.quad_scale = material.get_shader_parameter("quad_scale")
 
-	var hm_texture:ImageTexture = material.get_shader_parameter("hm")
-	# regione da 2049 a 513
-	var hm_region:= hm_texture.get_image().get_region(
-		Rect2i(i * size, Vector2i(size + 1, size + 1))
-	)
+	# var hm_texture:ImageTexture = material.get_shader_parameter("hm")
+	# # regione da 2049 a 513
+	# var hm_region:= hm_texture.get_image().get_region(
+	# 	Rect2i(i * size, Vector2i(size + 1, size + 1))
+	# )
 
-	var hm_region_texture:= ImageTexture.create_from_image(hm_region)
+	# var hm_region_texture:= ImageTexture.create_from_image(hm_region)
 
 	
 
@@ -52,7 +52,7 @@ func _init(i: Vector2i, size: int, meshes: Array, material: Material) -> void:
 		for y in 8:
 			var tile_index = Vector2i((index.x * 8) + x, (index.y * 8) + y)
 			var reposition = Vector3(offset.x + (x * tile_size), 0, offset.y + (y * tile_size))
-			var tile = Tile.new(tile_index, meshes, shader, hm_texture)
+			var tile = Tile.new(tile_index, meshes, shader, hm)
 
 			tile.set_shader({ max_distance_LOD=lods[-1] })
 
@@ -147,7 +147,7 @@ class Tile extends MeshInstance3D:
 		material_override.set_shader_parameter("hm", hm)
 		material_override.set_shader_parameter("level", level)
 		material_override.set_shader_parameter("index", index)
-		material_override.set_shader_parameter("quad_scale", 1.0 / 8.0)
+		# material_override.set_shader_parameter("quad_scale", 1.0 / 8.0)
 		material_override.set_shader_parameter("is_tile", true)
 		material_override.set_shader_parameter("min_LOD", min_lod)
 

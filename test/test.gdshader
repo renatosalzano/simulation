@@ -5,8 +5,6 @@ shader_type spatial;
 uniform float level;
 uniform vec2 index;
 uniform sampler2D hm: filter_nearest;
-uniform float quad_scale;
-uniform float quad_size;
 uniform float height_scale = 50.;
 
 uniform bool is_tile;
@@ -67,15 +65,10 @@ void vertex() {
 	int x = int(UV.x * float(edges));
     int y = int(UV.y * float(edges));
 
-	//vec2 offset = index * (pixel * edges + 1.0);
-	vec2 off = index * (1.0 / factor);
-	vec2 offset = level > 0.0 && index != vec2(0,0)
+	vec2 offset = level > 0.0
 		? index * (pixel * edges)
 		: vec2(0,0);
 		
-	if (index == vec2(0.0,0.0)) {
-		offset = vec2(1,1);
-	}
 
 	UV = offset + vec2(half_pixel, half_pixel) + vec2(float(x) * pixel, float(y) * pixel);
 
@@ -134,11 +127,10 @@ void fragment() {
 
 
 	ALBEDO = texture(hm, UV).rrr;
-	float pixel = (1.0 / 2049.) * 10.;
 	float edge = 0.01;
-	if (UV2.x < pixel || UV2.y < pixel) {
+	if (UV2.x < edge || UV2.y < edge) {
 		//ALBEDO = color;
-		ALBEDO += vec3(0,0.2,0);
+		ALBEDO = vec3(0,0.4,0);
 	}
 	// Called for every pixel the material is visible on.
 }

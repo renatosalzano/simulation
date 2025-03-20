@@ -17,6 +17,9 @@ func create_tile_mesh(size: int, subdiv: int) -> Mesh:
 	mesh.size = Vector2(size, size)
 	mesh.add_uv2 = true
 
+	mesh.custom_aabb.position = Vector3(-size / 2, -1500, -size / 2)
+	mesh.custom_aabb.size = Vector3(size, 5000, size)
+
 	return mesh
 
 	# var mesh_arrays = mesh.get_mesh_arrays()
@@ -76,7 +79,7 @@ func generate_mesh(size:= 64) -> Array:
 		
 		i += 1
 
-	print(subdivisions)
+	# print(subdivisions)
 
 	var lod_meshes = []
 	lod_meshes.resize(subdivisions.size())
@@ -90,18 +93,70 @@ func generate_mesh(size:= 64) -> Array:
 	return lod_meshes
 
 
+var mutex = Mutex.new()
+var task_count:= 0
+signal task_completed()
+
+func task(chunk_size: Array[int], size: int, offset: Vector2i, n: FastNoiseLite, data: PackedByteArray):
+	for y in range(chunk_size[0], chunk_size[1]):
+		for x in size:
+			var value:= n.get_noise_2d(float(x + offset.x), float(y + offset.y))
+			value = clamp(value, -1.0, 1.0) + 1.0
+			value *= 0.5
+			mutex.lock()
+			data[y * size + x] = int(value * 255)
+			mutex.unlock()
+
+	call_deferred("on_tasks_end")
+
+
+
+func on_tasks_end():
+	task_count -= 1
+	print(task_count)
+	if task_count == 0:
+		print("emit task end")
+		task_completed.emit()
+
+
 func generate_texture(size: int, offset: Vector2i) -> ImageTexture:
 	var hm:= Image.create(size, size, false, Image.FORMAT_R8)
 
-	for y in size:
-		for x in size:
-			var value:= noise.get_noise_2d(float(x + offset.x), float(y + offset.y))
-			value = clamp(value, -1.0, 1.0) + 1.0
-			value *= 0.5
-			hm.set_pixel(x, y, Color(value, 0, 0))
+	var data:= hm.get_data()
+	task_count = 8
 
+	var chunk:= []
+	chunk.resize(8)
+	var y = (size - 1) / 8 # 256
+
+	print(y)
+
+	for i in 8:
+		chunk[i] = [i * y, ((i + 1) * y) + (1 if i == 7 else 0)]
+
+	for chunk_y in chunk:
+		WorkerThreadPool.add_task(task.bind(chunk_y,size,offset,noise,data))
+
+	print(chunk)
+
+	print('await task')
+	await task_completed
+	print('task completed')
+
+	# for y in size:
+	# 	WorkerThreadPool.add_task(task.bind(y,size,offset,noise,data))
+	# 	# for x in size:
+	# 	# 	var value:= noise.get_noise_2d(float(x + offset.x), float(y + offset.y))
+	# 	# 	value = clamp(value, -1.0, 1.0) + 1.0
+	# 	# 	value *= 0.5
+	# 	# 	# hm.set_pixel(x, y, Color(value, 0, 0))
+	# 	# 	data[y * size + x] = int(value * 255)
+
+	
+	hm.set_data(size, size, false, Image.FORMAT_R8, data)
 	return ImageTexture.create_from_image(hm)
 
+var last_time:= Time.get_ticks_msec()
 
 func _ready() -> void:
 	var meshes:= []
@@ -112,14 +167,24 @@ func _ready() -> void:
 	generate_quad_mesh(size, min_size, meshes)
 	var lod_meshes:= generate_mesh()
 
+	last_time = Time.get_ticks_msec()
+	await generate_texture(size + 1, Vector2i(0,0) * size)
+	print('generate texture in {time}ms'.format({time=Time.get_ticks_msec() - last_time }))
+
+	return
+
 	var offset:= size / 2
 
 	for x in 2:
 		for y in 2:
 
+			last_time = Time.get_ticks_msec()
+
 			var index:= Vector2i(x,y)
 			# print(lod_meshes)
-			var hm:= generate_texture(size + 1, index * (size))
+			var hm:= await generate_texture(size + 1, index * size)
+			print('generate texture in {time}ms'.format({time=Time.get_ticks_msec() - last_time }))
+			last_time = Time.get_ticks_msec()
 
 			var quad = QuadTree.new(index, size, min_size, meshes, hm)
 			quad.position = Vector3(
@@ -128,9 +193,15 @@ func _ready() -> void:
 					(y * size) - offset
 				)
 			add_child(quad)
+			
+			print('generate quad in {time}ms'.format({time=Time.get_ticks_msec() - last_time }))
+			last_time = Time.get_ticks_msec()
 
-			quad.set_leafs(lod_meshes, noise)
+			quad.set_leafs(lod_meshes)
 			quads.append(quad)
+
+			print('set quad leaf in {time}ms'.format({time=Time.get_ticks_msec() - last_time }))
+			last_time = Time.get_ticks_msec()
 	
 	# quad.calc_area()
 
